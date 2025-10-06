@@ -1,0 +1,44 @@
+
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    networks:
+      - wordpress-network
+    env_file:
+      - .db.env
+    volumes:
+      - ./mysql:/var/lib/mysql  # ✅ usa volume nomeado, persistente e seguro
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    restart: always
+    networks:
+      - wordpress-network
+    ports:
+      - "127.0.0.1:8080:80"
+    env_file:
+      - .wordpress.env
+    volumes:
+      - "./wordpress/:/var/www/html"
+
+  # phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   restart: always
+  #   networks:
+  #     - wordpress-network
+  #   ports:
+  #     - "127.0.0.1:8081:80"
+  #   env_file:
+  #     - .phpmyadmin.env
+  
+
+networks:
+  wordpress-network:
+    driver: bridge
+    name: wordpress-network
+
+volumes:
+  mysql:
