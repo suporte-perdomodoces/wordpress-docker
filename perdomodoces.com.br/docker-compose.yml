@@ -16,7 +16,7 @@ services:
     networks:
       - default
 
-  site1.com.br:
+  perdomodoces.com.br:
     image: wordpress:latest
     container_name: ${DOMAIN}_web
     env_file:
