@@ -1,0 +1,35 @@
+services:
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx_proxy
+    ports:
+      - '80:80'
+      - '8081:81'
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+    networks:
+      - rede_proxy_reverso
+      - default
+
+  db:
+    image: mariadb:latest
+    container_name: nginx_proxy_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./db_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    name: rede_npm
+  rede_proxy_reverso:
+    external: true

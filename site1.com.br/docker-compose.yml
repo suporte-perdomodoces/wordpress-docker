@@ -1,0 +1,73 @@
+services:
+
+  db:
+    image: mariadb:latest
+    container_name: ${DOMAIN}_db
+    command: '--default-authentication-plugin=mysql_native_password'
+    volumes:
+      - ./db_data:/var/lib/mysql
+    restart: always
+    env_file: .env
+    environment:
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+    networks:
+      - default
+
+  site1.com.br:
+    image: wordpress:latest
+    container_name: ${DOMAIN}_web
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - ./public_html:/var/www/html/
+      - ./logs:/var/log/apache2
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    ports:
+      - "9080:80"
+    restart: always
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=${MYSQL_USER}
+      - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
+      - WORDPRESS_DB_NAME=${MYSQL_DB}
+      - WORDPRESS_TABLE_PREFIX=${WP_PREFIX}
+    extra_hosts:
+      - "${DOMAIN}:127.0.1.1"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        usermod -u $${USER} www-data
+        groupmod -g $${GROUP} www-data
+        /usr/local/bin/docker-entrypoint.sh apache2-foreground
+    networks:
+      - rede_proxy_reverso
+      - default
+
+  phpmyadmin:
+    container_name: ${DOMAIN}-phpmyadmin
+    image: linuxserver/phpmyadmin
+    env_file: .env
+    environment:
+      PMA_HOST: db #nome do container que proverá recursos de banco de dados, neste caso o container chama db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      UPLOAD_LIMIT: 64M
+      MEMORY_LIMIT: 256M
+      MAX_EXECUTION_TIME: 300
+    ports:
+      - "9081:80"
+    networks:
+      - default
+
+networks:
+  default:
+    name: rede_${DOMAIN}
+  rede_proxy_reverso:
+    external: true
